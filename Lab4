@@ -28,4 +28,4 @@ date2 = datetime(2024, 2, 10, 14, 30, 0)  # Another example date
 
 difference = (date2 - date1).total_seconds()
 
-
+print("Difference in seconds:", difference)
