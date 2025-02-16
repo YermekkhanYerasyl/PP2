@@ -1,0 +1,34 @@
+def square_generator(N):
+    for i in range(N + 1):
+        yield i ** 2
+
+def even_numbers(n):
+    return (num for num in range(n + 1) if num % 2 == 0)
+
+def divisible_by_3_and_4(n):
+    return (num for num in range(n + 1) if num % 3 == 0 and num % 4 == 0)
+
+def squares(a, b):
+    for num in range(a, b + 1):
+        yield num ** 2
+
+def countdown(n):
+    while n >= 0:
+        yield n
+        n -= 1
+
+N = 10
+print(f"Squares up to {N}: {list(square_generator(N))}")
+
+n = int(input("Enter a number: "))
+print(", ".join(map(str, even_numbers(n))))
+
+n = 50
+print(f"Numbers divisible by 3 and 4 up to {n}: {list(divisible_by_3_and_4(n))}")
+
+a, b = 3, 8
+for value in squares(a, b):
+    print(value)
+
+n = 5
+print(f"Countdown from {n}: {list(countdown(n))}")
