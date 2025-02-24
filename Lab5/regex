@@ -1,0 +1,60 @@
+import re
+
+# 1. Match a string that has an 'a' followed by zero or more 'b''s
+def match_a_followed_by_b(s):
+    return bool(re.fullmatch(r'ab*', s))
+
+# 2. Match a string that has an 'a' followed by two to three 'b'
+def match_a_followed_by_two_to_three_b(s):
+    return bool(re.fullmatch(r'ab{2,3}', s))
+
+# 3. Find sequences of lowercase letters joined with an underscore
+def find_lowercase_with_underscore(s):
+    return re.findall(r'\b[a-z]+_[a-z]+\b', s)
+
+# 4. Find sequences of one uppercase letter followed by lowercase letters
+def find_uppercase_followed_by_lowercase(s):
+    return re.findall(r'[A-Z][a-z]+', s)
+
+# 5. Match a string that has an 'a' followed by anything, ending in 'b'
+def match_a_anything_b(s):
+    return bool(re.fullmatch(r'a.*b', s))
+
+# 6. Replace all occurrences of space, comma, or dot with a colon
+def replace_with_colon(s):
+    return re.sub(r'[ ,.]', ':', s)
+
+# 7. Convert snake_case string to camelCase
+def snake_to_camel(s):
+    return re.sub(r'_([a-z])', lambda m: m.group(1).upper(), s)
+
+# 8. Split a string at uppercase letters
+def split_at_uppercase(s):
+    return re.split(r'(?=[A-Z])', s)
+
+# 9. Insert spaces between words starting with capital letters
+def insert_spaces_between_capitals(s):
+    return re.sub(r'(?<!^)(?=[A-Z])', ' ', s)
+
+# 10. Convert camelCase string to snake_case
+def camel_to_snake(s):
+    return re.sub(r'([a-z])([A-Z])', r'\1_\2', s).lower()
+
+# Testing the functions
+test_strings = [
+    "ab", "abb", "abbb", "acb", "a", "bb",
+    "hello_world", "this_is_snake_case", "HelloWorld", "CamelCaseString",
+    "Hello there, how are you?", "ThisIsATestString"
+]
+
+print(match_a_followed_by_b("a"))  # True
+print(match_a_followed_by_b("abbb"))  # True
+print(match_a_followed_by_two_to_three_b("abb"))  # True
+print(find_lowercase_with_underscore("hello_world this_is_snake_case"))  # ['hello_world', 'this_is_snake_case']
+print(find_uppercase_followed_by_lowercase("HelloWorld TestString"))  # ['Hello', 'World', 'Test', 'String']
+print(match_a_anything_b("acb"))  # True
+print(replace_with_colon("Hello, world. This is a test."))  # 'Hello:world:This:is:a:test:'
+print(snake_to_camel("this_is_snake_case"))  # 'thisIsSnakeCase'
+print(split_at_uppercase("ThisIsATestString"))  # ['', 'This', 'Is', 'A', 'Test', 'String']
+print(insert_spaces_between_capitals("ThisIsATestString"))  # 'This Is A Test String'
+print(camel_to_snake("ThisIsATestString"))  # 'this_is_a_test_string'
