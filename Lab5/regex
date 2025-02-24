@@ -40,7 +40,7 @@ def insert_spaces_between_capitals(s):
 def camel_to_snake(s):
     return re.sub(r'([a-z])([A-Z])', r'\1_\2', s).lower()
 
-# Testing the functions
+
 test_strings = [
     "ab", "abb", "abbb", "acb", "a", "bb",
     "hello_world", "this_is_snake_case", "HelloWorld", "CamelCaseString",
