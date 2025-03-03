@@ -1,17 +1,18 @@
+#1
 def square_generator(N):
     for i in range(N + 1):
         yield i ** 2
-
+#2
 def even_numbers(n):
     return (num for num in range(n + 1) if num % 2 == 0)
-
+#3
 def divisible_by_3_and_4(n):
     return (num for num in range(n + 1) if num % 3 == 0 and num % 4 == 0)
-
+#4
 def squares(a, b):
     for num in range(a, b + 1):
         yield num ** 2
-
+#5
 def countdown(n):
     while n >= 0:
         yield n
