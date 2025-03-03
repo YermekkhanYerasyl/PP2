@@ -1,0 +1,63 @@
+import os
+import shutil
+import string
+
+with open("example.txt", "w") as f:
+    f.write("adhfsfgagd\nafdgafafg\nagfadgagdfn\n")
+    
+with open("source.txt", "w") as f:
+    f.write("My\nname\nis\nYerasyl")
+    
+def list_items(path):
+    files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
+    directories = [d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))]
+    return files, directories
+
+def check_access(path):
+    return {
+        "Exists": os.path.exists(path),
+        "Readable": os.access(path, os.R_OK),
+        "Writable": os.access(path, os.W_OK),
+        "Executable": os.access(path, os.X_OK)
+    }
+
+def path_info(path):
+    if os.path.exists(path):
+        return {"Directory": os.path.dirname(path), "Filename": os.path.basename(path)}
+    return "Path does not exist"
+
+def count_lines(example):
+    with open(example, 'r') as file:
+        return sum(1 for _ in file)
+
+def write_list_to_file(example, list):
+    with open(example, 'w') as file:
+        for item in list:
+            file.write(f"{item}\n")
+
+def generate_text_files():
+    for letter in list:
+        with open(f"{letter}.txt", 'w') as file:
+            file.write(f"This is {letter}.txt\n")
+
+def copy_file(source, destination):
+    shutil.copy(source, destination)
+
+def delete_file(path):
+    if os.path.exists(path) and os.access(path, os.W_OK):
+        os.remove(path)
+        return "File deleted"
+    return "File does not exist or cannot be deleted"
+
+# Sample usage
+if __name__ == "__main__":
+    path = "./"
+    print("Files and Directories:", list_items(path))
+    print("Access Check:", check_access(path))
+    print("Path Info:", path_info("example.txt"))
+    print("Line Count:", count_lines("example.txt"))
+    write_list_to_file("list.txt", ["apple", "banana", "cherry"])
+    list=["apple", "banana", "cherry"]
+    generate_text_files()
+    copy_file("source.txt", "destination.txt")
+    print(delete_file("example.txt"))
