@@ -1,14 +1,14 @@
 import math
-
+#1
 def degrees_to_radians(degrees):
     return degrees * (math.pi / 180)
-
+#2
 def area_of_trapezoid(height, base1, base2):
     return 0.5 * (base1 + base2) * height
-
+#3
 def area_of_regular_polygon(num_sides, side_length):
     return (num_sides * side_length ** 2) / (4 * math.tan(math.pi / num_sides))
-
+#4
 def area_of_parallelogram(base, height):
     return base * height
 
