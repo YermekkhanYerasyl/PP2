@@ -32,3 +32,20 @@ if __name__ == "__main__":
     num, delay_ms = 25100, 2123
     print(f"Square root of {num} after {delay_ms} milliseconds is {delayed_sqrt(num, delay_ms)}")
     print(all_true((True, True, False)))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def multi(l):
+    reduce(lambda x , y: x * y )
