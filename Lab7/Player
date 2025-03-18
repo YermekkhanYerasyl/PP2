@@ -1,0 +1,43 @@
+import pygame
+import time
+import math
+
+pygame.init()
+
+WIDTH = 800
+HEIGHT = 600
+screen = pygame.display.set_mode((WIDTH, HEIGHT))  
+pygame.display.set_caption("Music Player")
+
+WHITE = (255, 255, 255)
+
+pygame.mixer.init()
+songs = ["song1.mp3", "song2.mp3", "song3.mp3"]
+current_song = 0
+pygame.mixer.music.load(songs[current_song])
+
+running = True
+
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_p:
+                pygame.mixer.music.play()
+            elif event.key == pygame.K_s:
+                pygame.mixer.music.stop()
+            elif event.key == pygame.K_n:
+                current_song = (current_song + 1) % len(songs)
+                pygame.mixer.music.load(songs[current_song])
+                pygame.mixer.music.play()
+            elif event.key == pygame.K_b:
+                current_song = (current_song - 1) % len(songs)
+                pygame.mixer.music.load(songs[current_song])
+                pygame.mixer.music.play()
+                
+    screen.fill(WHITE)
+    
+    pygame.display.flip()
+
+pygame.quit()
