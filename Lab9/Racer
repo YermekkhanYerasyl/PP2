@@ -1,0 +1,159 @@
+import pygame, sys
+from pygame.locals import *
+import random
+
+def game_loop():
+    pygame.init()
+
+    FPS = 60
+    FramePerSec = pygame.time.Clock()
+
+    # Colors
+    BLUE = (0, 0, 255)
+    RED = (255, 0, 0)
+    GREEN = (0, 255, 0)
+    BLACK = (0, 0, 0)
+    WHITE = (255, 255, 255)
+
+    # Screen settings
+    SCREEN_WIDTH = 400
+    SCREEN_HEIGHT = 800
+    SPEED = 1
+    COIN_THRESHOLD = 5  # Speed increases every 5 coins
+
+    DISPLAYSURF = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    pygame.display.set_caption("Game")
+
+    # Load images
+    player_img = pygame.image.load("Player.png")
+    enemy_img = pygame.image.load("Enemy.png")
+    coin_img = pygame.image.load("Coin.png")
+    coin_img = pygame.transform.scale(coin_img, (50, 50))
+
+    class Enemy(pygame.sprite.Sprite):
+        def __init__(self):
+            super().__init__()
+            self.image = enemy_img
+            self.rect = self.image.get_rect()
+            self.rect.center = (random.randint(40, SCREEN_WIDTH - 40), 0)
+        
+        def move(self):
+            nonlocal SPEED
+            self.rect.move_ip(0, SPEED)
+            if self.rect.bottom > SCREEN_HEIGHT:
+                self.rect.top = 0
+                self.rect.center = (random.randint(30, SCREEN_WIDTH - 30), 0)
+        
+        def draw(self, surface):
+            surface.blit(self.image, self.rect)
+
+    class Player(pygame.sprite.Sprite):
+        def __init__(self):
+            super().__init__()
+            self.image = player_img
+            self.rect = self.image.get_rect()
+            self.rect.center = (160, SCREEN_HEIGHT - 100)
+
+        def update(self):
+            pressed_keys = pygame.key.get_pressed()
+            if self.rect.left > 0 and pressed_keys[K_LEFT]:
+                self.rect.move_ip(-5, 0)
+            if self.rect.right < SCREEN_WIDTH and pressed_keys[K_RIGHT]:
+                self.rect.move_ip(5, 0)
+        
+        def draw(self, surface):
+            surface.blit(self.image, self.rect)
+
+    class Coin(pygame.sprite.Sprite):
+        def __init__(self, enemy_rect):
+            super().__init__()
+            self.image = coin_img
+            self.rect = self.image.get_rect()
+            while True:
+                new_x = random.randint(30, SCREEN_WIDTH - 30)
+                new_y = random.randint(50, SCREEN_HEIGHT - 200)
+                self.rect.center = (new_x, new_y)
+                if not enemy_rect.colliderect(self.rect):
+                    break
+            self.value = random.choice([1, 2, 3])  # Different coin weights
+        
+        def move(self):
+            nonlocal SPEED
+            self.rect.move_ip(0, SPEED)
+            if self.rect.top > SCREEN_HEIGHT:
+                self.__init__(E1.rect)  # Reposition the coin avoiding the enemy
+        
+        def draw(self, surface):
+            surface.blit(self.image, self.rect)
+
+    P1 = Player()
+    E1 = Enemy()
+    coins = pygame.sprite.Group()
+    all_sprites = pygame.sprite.Group()
+    enemies = pygame.sprite.Group()
+
+    enemies.add(E1)
+    all_sprites.add(P1, E1)
+
+    # Generate initial coin
+    coin = Coin(E1.rect)
+    coins.add(coin)
+    all_sprites.add(coin)
+
+    # User event to increase speed
+    INC_SPEED = pygame.USEREVENT + 1
+    pygame.time.set_timer(INC_SPEED, 1000)
+
+    coin_count = 0
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+        
+        P1.update()
+        E1.move()
+        coin.move()
+        
+        # Check for collision with enemy
+        if pygame.sprite.collide_rect(P1, E1):
+            game_over(DISPLAYSURF)
+            return
+        
+        # Check for coin collection
+        if pygame.sprite.collide_rect(P1, coin):
+            coin_count += coin.value
+            if coin_count % COIN_THRESHOLD == 0:
+                SPEED += 0.5  # Increase enemy and coin speed after collecting enough coins
+            coin.__init__(E1.rect)  # Reposition the coin avoiding the enemy
+        
+        DISPLAYSURF.fill(WHITE)
+        for entity in all_sprites:
+            entity.draw(DISPLAYSURF)
+        
+        pygame.display.update()
+        FramePerSec.tick(FPS)
+
+def game_over(DISPLAYSURF):
+    BLACK = (0, 0, 0)
+    RED = (255, 0, 0)
+    SCREEN_HEIGHT = 800
+
+    DISPLAYSURF.fill(BLACK)
+    font = pygame.font.Font(None, 50)
+    text = font.render("Game Over! Press R to Restart", True, RED)
+    DISPLAYSURF.blit(text, (50, SCREEN_HEIGHT // 2 - 100))
+    pygame.display.update()
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == KEYDOWN and event.key == K_r:
+                game_loop()
+                return
+
+# Start the game loop
+game_loop()
