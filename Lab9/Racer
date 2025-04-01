@@ -30,6 +30,8 @@ def game_loop():
     coin_img = pygame.image.load("Coin.png")
     coin_img = pygame.transform.scale(coin_img, (50, 50))
 
+    font = pygame.font.Font(None, 36)
+
     class Enemy(pygame.sprite.Sprite):
         def __init__(self):
             super().__init__()
@@ -75,7 +77,7 @@ def game_loop():
                 self.rect.center = (new_x, new_y)
                 if not enemy_rect.colliderect(self.rect):
                     break
-            self.value = random.choice([1, 2, 3])  # Different coin weights
+            self.value = random.choice([1, 2])  # Coins now give either 1 or 2 points
         
         def move(self):
             nonlocal SPEED
@@ -88,7 +90,6 @@ def game_loop():
 
     P1 = Player()
     E1 = Enemy()
-    coins = pygame.sprite.Group()
     all_sprites = pygame.sprite.Group()
     enemies = pygame.sprite.Group()
 
@@ -97,7 +98,6 @@ def game_loop():
 
     # Generate initial coin
     coin = Coin(E1.rect)
-    coins.add(coin)
     all_sprites.add(coin)
 
     # User event to increase speed
@@ -131,6 +131,10 @@ def game_loop():
         DISPLAYSURF.fill(WHITE)
         for entity in all_sprites:
             entity.draw(DISPLAYSURF)
+        
+        # Display coin counter
+        coin_text = font.render(f"Coins: {coin_count}", True, BLACK)
+        DISPLAYSURF.blit(coin_text, (SCREEN_WIDTH - 120, 10))
         
         pygame.display.update()
         FramePerSec.tick(FPS)
