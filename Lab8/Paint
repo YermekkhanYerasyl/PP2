@@ -1,135 +1,97 @@
 import pygame
 
+
 def main():
     pygame.init()
     screen = pygame.display.set_mode((640, 480))
     clock = pygame.time.Clock()
     
-    # Параметры
     radius = 15
-    mode = 'blue'  # Цвет по умолчанию
-    tool = 'free_draw'  # Инструмент по умолчанию: free_draw, rectangle, circle, eraser
-    points = []  # Точки для свободного рисования
-    start_pos = None  # Начальная позиция для фигур
-    drawing = False  # Флаг рисования прямоугольника
+    mode = 'blue'
+    tool = 'pen'  # 'pen', 'circle', 'rect', 'eraser'
+    points = []
+    start_pos = None
+    background = pygame.Surface(screen.get_size())
+    background.fill((0, 0, 0))
     
     while True:
         pressed = pygame.key.get_pressed()
-        alt_held = pressed[pygame.K_LALT] or pressed[pygame.K_RALT]
-        ctrl_held = pressed[pygame.K_LCTRL] or pressed[pygame.K_RCTRL]
         
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_w and ctrl_held:
-                    return
-                if event.key == pygame.K_F4 and alt_held:
-                    return
                 if event.key == pygame.K_ESCAPE:
                     return
                 
-                # Выбор цвета
+                # Change color
                 if event.key == pygame.K_r:
                     mode = 'red'
                 elif event.key == pygame.K_g:
                     mode = 'green'
                 elif event.key == pygame.K_b:
                     mode = 'blue'
-                
-                # Выбор инструмента
-                elif event.key == pygame.K_t:
-                    tool = 'rectangle'
                 elif event.key == pygame.K_y:
-                    tool = 'circle'
+                    mode = 'yellow'
+                elif event.key == pygame.K_w:
+                    mode = 'white'
                 elif event.key == pygame.K_e:
+                    mode = 'black'
+                
+                # Change tool
+                if event.key == pygame.K_e:
                     tool = 'eraser'
-                elif event.key == pygame.K_f:
-                    tool = 'free_draw'
-                
+                elif event.key == pygame.K_c:
+                    tool = 'circle'
+                elif event.key == pygame.K_t:
+                    tool = 'rect'
+                elif event.key == pygame.K_p:
+                    tool = 'pen'
+            
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1:  # Левая кнопка
-                    radius = min(200, radius + 1)
-                    start_pos = event.pos
-                    if tool == 'rectangle':
-                        drawing = True  # Начинаем рисовать прямоугольник
-                elif event.button == 3:  # Правая кнопка
-                    radius = max(1, radius - 1)
-                
-            if event.type == pygame.MOUSEMOTION and tool == 'free_draw':
-                position = event.pos
-                points.append(position)
-                points = points[-256:]  # Ограничение на количество точек
+                if event.button == 1:  # Left click
+                    if tool in ['circle', 'rect']:
+                        start_pos = event.pos
+                    else:
+                        pygame.draw.circle(background, (0, 0, 0) if tool == 'eraser' else get_color(mode), event.pos, radius)
+                elif event.button == 3:  # Right click (change brush size)
+                    radius = max(1, radius - 1) if pygame.key.get_mods() & pygame.KMOD_SHIFT else min(200, radius + 1)
+            
+            if event.type == pygame.MOUSEMOTION and tool == 'pen':
+                pygame.draw.circle(background, get_color(mode), event.pos, radius)
+            
+            if event.type == pygame.MOUSEMOTION and tool == 'eraser':
+                pygame.draw.circle(background, get_color(mode), event.pos, radius)
             
             if event.type == pygame.MOUSEBUTTONUP:
-                if event.button == 1 and start_pos:
-                    if tool in ['rectangle', 'circle']:
-                        drawShape(screen, tool, start_pos, event.pos, radius, mode)
-                        drawing = False
-                        start_pos = None
+                if tool in ['circle', 'rect'] and start_pos:
+                    end_pos = event.pos
+                    draw_shape(background, start_pos, end_pos, tool, mode)
         
-        # Очистка экрана
-        screen.fill((255, 255, 255))
-        
-        # Рисование всех точек свободного рисования
-        i = 0
-        while i < len(points) - 1:
-            drawLineBetween(screen, i, points[i], points[i + 1], radius, mode, tool)
-            i += 1
-        
-        # Предварительный просмотр прямоугольника во время рисования
-        if drawing and tool == 'rectangle':
-            current_pos = pygame.mouse.get_pos()
-            x = min(start_pos[0], current_pos[0])
-            y = min(start_pos[1], current_pos[1])
-            width = abs(start_pos[0] - current_pos[0])
-            height = abs(start_pos[1] - current_pos[1])
-            pygame.draw.rect(screen, (255, 255, 255), (x, y, width, height), 2)  # Белый для предпросмотра
-        
+        screen.blit(background, (0, 0))
         pygame.display.flip()
         clock.tick(60)
+        
 
-def drawLineBetween(screen, index, start, end, width, color_mode, tool):
-    c1 = max(0, min(255, 2 * index - 256))
-    c2 = max(0, min(255, 2 * index))
-    
-    if color_mode == 'blue':
-        color = (c1, c1, c2)
-    elif color_mode == 'red':
-        color = (c2, c1, c1)
-    elif color_mode == 'green':
-        color = (c1, c2, c1)
-    
-    if tool == 'eraser':
-        color = (0, 0, 0)  # Ластик — черный
-    
-    dx = start[0] - end[0]
-    dy = start[1] - end[1]
-    iterations = max(abs(dx), abs(dy))
-    
-    for i in range(iterations):
-        progress = 1.0 * i / iterations
-        aprogress = 1 - progress
-        x = int(aprogress * start[0] + progress * end[0])
-        y = int(aprogress * start[1] + progress * end[1])
-        pygame.draw.circle(screen, color, (x, y), width)
+def get_color(color_mode):
+    colors = {
+        'blue': (0, 0, 255),
+        'red': (255, 0, 0),
+        'green': (0, 255, 0),
+        'yellow': (255, 255, 0),
+        'white': (255, 255, 255),
+        'black' : (0 , 0 , 0)
+    }
+    return colors.get(color_mode, (255, 255, 255))
 
-def drawShape(screen, tool, start, end, width, color_mode):
-    if color_mode == 'blue':
-        color = (0, 0, 255)
-    elif color_mode == 'red':
-        color = (255, 0, 0)
-    elif color_mode == 'green':
-        color = (0, 255, 0)
-    
-    if tool == 'rectangle':
-        rect = pygame.Rect(start, (end[0] - start[0], end[1] - start[1]))
-        pygame.draw.rect(screen, color, rect, width)
-    elif tool == 'circle':
+def draw_shape(screen, start, end, tool, color):
+    color = get_color(color)
+    if tool == 'circle':
         center = ((start[0] + end[0]) // 2, (start[1] + end[1]) // 2)
-        radius = max(abs(end[0] - start[0]) // 2, abs(end[1] - start[1]) // 2)
-        pygame.draw.circle(screen, color, center, radius, width)
-
-if __name__ == '__main__':
-    main()
-    pygame.quit()
+        radius = max(abs(start[0] - end[0]) // 2, abs(start[1] - end[1]) // 2)
+        pygame.draw.circle(screen, color, center, radius, 2)
+    elif tool == 'rect':
+        rect = pygame.Rect(start, (end[0] - start[0], end[1] - start[1]))
+        pygame.draw.rect(screen, color, rect, 2)
+        
+main()

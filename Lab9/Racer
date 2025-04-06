@@ -18,7 +18,7 @@ def game_loop():
     # Screen settings
     SCREEN_WIDTH = 400
     SCREEN_HEIGHT = 800
-    SPEED = 1
+    SPEED = 5
     COIN_THRESHOLD = 5  # Speed increases every 5 coins
 
     DISPLAYSURF = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
