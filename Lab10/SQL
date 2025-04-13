@@ -1,0 +1,127 @@
+import sqlite3
+import csv
+
+# Подключение к БД
+conn = sqlite3.connect("phonebook.db")
+cur = conn.cursor()
+
+# 1. Создание таблицы
+cur.execute("""
+CREATE TABLE IF NOT EXISTS phonebook (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL,
+    phone TEXT NOT NULL
+)
+""")
+conn.commit()
+
+# 2. Вставка данных
+def insert_from_console():
+    username = input("Введите имя: ")
+    phone = input("Введите номер телефона: ")
+    cur.execute("INSERT INTO phonebook (username, phone) VALUES (?, ?)", (username, phone))
+    conn.commit()
+    print("Контакт добавлен.")
+
+def insert_from_csv(filename):
+    try:
+        with open(filename, 'r', encoding='utf-8') as file:
+            reader = csv.reader(file)
+            for row in reader:
+                cur.execute("INSERT INTO phonebook (username, phone) VALUES (?, ?)", (row[0], row[1]))
+        conn.commit()
+        print("Контакты из CSV добавлены.")
+    except FileNotFoundError:
+        print("Файл не найден.")
+
+# 3. Обновление данных
+def update_contact():
+    field = input("Что хотите изменить? (username / phone): ").strip().lower()
+    old_value = input(f"Введите текущее значение поля {field}: ")
+    new_value = input("Введите новое значение: ")
+    if field == "username":
+        cur.execute("UPDATE phonebook SET username = ? WHERE username = ?", (new_value, old_value))
+    elif field == "phone":
+        cur.execute("UPDATE phonebook SET phone = ? WHERE phone = ?", (new_value, old_value))
+    else:
+        print("Неверное поле")
+        return
+    conn.commit()
+    print("Контакт обновлён.")
+
+# 4. Запрос данных
+def query_contacts():
+    filter_by = input("Фильтрация по (username / phone / all): ").strip().lower()
+    if filter_by == "username":
+        value = input("Введите имя: ")
+        cur.execute("SELECT * FROM phonebook WHERE username = ?", (value,))
+    elif filter_by == "phone":
+        value = input("Введите телефон: ")
+        cur.execute("SELECT * FROM phonebook WHERE phone = ?", (value,))
+    elif filter_by == "all":
+        cur.execute("SELECT * FROM phonebook")
+    else:
+        print("Неверный фильтр")
+        return
+
+    rows = cur.fetchall()
+    for row in rows:
+        print(row)
+
+# 5. Удаление контакта
+def delete_contact():
+    field = input("Удалить по (username / phone): ").strip().lower()
+    value = input("Введите значение: ")
+    if field == "username":
+        cur.execute("DELETE FROM phonebook WHERE username = ?", (value,))
+    elif field == "phone":
+        cur.execute("DELETE FROM phonebook WHERE phone = ?", (value,))
+    else:
+        print("Неверное поле")
+        return
+    conn.commit()
+    print("Контакт удалён.")
+
+# 6. Очистка таблицы и сброс id
+def clear_and_reset_id():
+    cur.execute("DELETE FROM phonebook")  # Удаление всех записей
+    conn.commit()
+    cur.execute("VACUUM")  # Сброс автоинкремента
+    conn.commit()
+    print("Все контакты удалены и ID сброшены на 1.")
+
+# Главное меню
+def main():
+    while True:
+        print("\n=== PhoneBook Menu ===")
+        print("1. Добавить контакт (консоль)")
+        print("2. Загрузить контакты из CSV")
+        print("3. Обновить контакт")
+        print("4. Найти контакт")
+        print("5. Удалить контакт")
+        print("6. Очистить таблицу и сбросить ID")
+        print("7. Выйти")
+
+        choice = input("Выберите действие: ")
+
+        if choice == "1":
+            insert_from_console()
+        elif choice == "2":
+            insert_from_csv("contacts.csv")  # имя CSV-файла
+        elif choice == "3":
+            update_contact()
+        elif choice == "4":
+            query_contacts()
+        elif choice == "5":
+            delete_contact()
+        elif choice == "6":
+            clear_and_reset_id()
+        elif choice == "7":
+            break
+        else:
+            print("Неверный выбор.")
+
+    conn.close()
+
+if __name__ == "__main__":
+    main()

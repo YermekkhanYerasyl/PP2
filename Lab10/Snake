@@ -1,0 +1,142 @@
+import sqlite3
+import pygame
+import sys
+import random
+
+# --- DATABASE ---
+conn = sqlite3.connect("snake_game.db")
+cursor = conn.cursor()
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL
+)
+""")
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS scores (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    score INTEGER,
+    level INTEGER,
+    FOREIGN KEY(user_id) REFERENCES users(id)
+)
+""")
+conn.commit()
+
+# --- USER LOGIN ---
+username = input("Enter your username: ")
+cursor.execute("SELECT id FROM users WHERE username = ?", (username,))
+user = cursor.fetchone()
+
+if not user:
+    cursor.execute("INSERT INTO users (username) VALUES (?)", (username,))
+    conn.commit()
+    user_id = cursor.lastrowid
+    level = 1
+else:
+    user_id = user[0]
+    cursor.execute("SELECT MAX(level) FROM scores WHERE user_id = ?", (user_id,))
+    level = cursor.fetchone()[0] or 1
+
+print(f"Welcome {username}! Your current level is {level}")
+
+# --- SAVE GAME FUNCTION ---
+def save_game(user_id, score, level):
+    cursor.execute("INSERT INTO scores (user_id, score, level) VALUES (?, ?, ?)", (user_id, score, level))
+    conn.commit()
+
+# --- GAME SETUP ---
+def load_level(level):
+    if level == 1:
+        return 10, []
+    elif level == 2:
+        return 12, [(100, 100), (120, 100), (500, 100), (520, 100), (300, 300), (300, 320)]
+    elif level == 3:
+        return 14, [(x, 200) for x in range(200, 400, 20)] + [(300, y) for y in range(100, 300, 20)] + [(x, 100) for x in range(100, 200, 20)]
+    else:
+        return 16, [(x, 100) for x in range(100, 500, 20)] + [(x, 300) for x in range(100, 500, 20)] + [(300, y) for y in range(100, 300, 20)] + [(100, y) for y in range(200, 380, 20)] + [(500, y) for y in range(20, 200, 20)]
+
+def get_random_apple():
+    value = random.randint(1, 3)
+    color = (255, 0, 0) if value == 1 else (255, 165, 0) if value == 2 else (0, 0, 255)
+    position = (random.randint(0, 29)*20, random.randint(0, 19)*20)
+    return position, value, color
+
+pygame.init()
+screen = pygame.display.set_mode((600, 400))
+clock = pygame.time.Clock()
+font = pygame.font.SysFont(None, 36)
+
+snake = [(100, 100), (80, 100), (60, 100)]
+direction = (0, 0)  # no movement at start
+apple, apple_value, apple_color = get_random_apple()
+score = 0
+started = False
+paused = False
+
+speed, walls = load_level(level)
+
+# --- GAME LOOP ---
+while True:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            save_game(user_id, score, level)
+            pygame.quit()
+            sys.exit()
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_p:
+                paused = not paused
+                save_game(user_id, score, level)
+                print("Game paused and saved." if paused else "Game resumed.")
+            elif event.key == pygame.K_UP and direction != (0, 20):
+                direction = (0, -20)
+                started = True
+            elif event.key == pygame.K_DOWN and direction != (0, -20):
+                direction = (0, 20)
+                started = True
+            elif event.key == pygame.K_LEFT and direction != (20, 0):
+                direction = (-20, 0)
+                started = True
+            elif event.key == pygame.K_RIGHT and direction != (-20, 0):
+                direction = (20, 0)
+                started = True
+
+    if paused:
+        continue
+
+    if started:
+        head = (snake[0][0] + direction[0], snake[0][1] + direction[1])
+        snake = [head] + snake[:-1]
+
+        if head == apple:
+            snake.append(snake[-1])
+            score += apple_value
+            apple, apple_value, apple_color = get_random_apple()
+
+            # Increase level every 20 points
+            if score >= level * 20:
+                level += 1
+                speed, walls = load_level(level)
+                print(f"Level up! Now you are on level {level}")
+
+        if head in snake[1:] or head in walls or not (0 <= head[0] < 600 and 0 <= head[1] < 400):
+            print("Collision detected!")
+            save_game(user_id, score, level)
+            pygame.time.delay(1000)
+            pygame.quit()
+            sys.exit()
+
+    screen.fill((0, 0, 0))
+    for segment in snake:
+        pygame.draw.rect(screen, (0, 255, 0), (*segment, 20, 20))
+    pygame.draw.rect(screen, apple_color, (*apple, 20, 20))
+    for wall in walls:
+        pygame.draw.rect(screen, (100, 100, 100), (*wall, 20, 20))
+
+    score_text = font.render(f"Score: {score} | Level: {level} | Apple: +{apple_value}", True, (255, 255, 255))
+    screen.blit(score_text, (10, 10))
+
+    pygame.display.flip()
+    clock.tick(speed)
