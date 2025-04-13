@@ -78,7 +78,6 @@ paused = False
 
 speed, walls = load_level(level)
 
-# --- GAME LOOP ---
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
