@@ -84,9 +84,9 @@ def delete_contact():
 
 # 6. Очистка таблицы и сброс id
 def clear_and_reset_id():
-    cur.execute("DELETE FROM phonebook")  # Удаление всех записей
+    cur.execute("DELETE FROM phonebook")
     conn.commit()
-    cur.execute("VACUUM")  # Сброс автоинкремента
+    cur.execute("VACUUM")
     conn.commit()
     print("Все контакты удалены и ID сброшены на 1.")
 
