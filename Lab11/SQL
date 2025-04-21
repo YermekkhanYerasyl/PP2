@@ -1,0 +1,107 @@
+import psycopg2
+
+# Подключение к PostgreSQL
+conn = psycopg2.connect(
+    dbname="postgres",      # имя базы данных
+    user="postgres",        # имя пользователя
+    password="TripleY3",  # замени на свой пароль
+    host="localhost",
+    port="5432"
+)
+cur = conn.cursor()
+
+# 1. Поиск по шаблону
+def search_contacts(pattern):
+    cur.execute("SELECT * FROM search_contacts(%s)", (pattern,))
+    rows = cur.fetchall()
+    if rows:
+        for row in rows:
+            print(row)
+    else:
+        print("Ничего не найдено.")
+
+# 2. Вставка или обновление пользователя
+def insert_or_update_user(username, phone):
+    cur.execute("CALL insert_or_update_user(%s, %s)", (username, phone))
+    conn.commit()
+    print("Контакт добавлен или обновлён.")
+
+# 3. Вставка списка пользователей с проверкой
+def insert_many_users(user_list):
+    cur.execute("SELECT * FROM insert_many_users(%s)", (user_list,))
+    incorrect = cur.fetchall()
+    if incorrect:
+        print("Некорректные записи:")
+        for user in incorrect:
+            print(user)
+    else:
+        print("Все контакты добавлены корректно.")
+    conn.commit()
+
+# 4. Пагинация
+def get_paginated_contacts(limit, offset):
+    cur.execute("SELECT * FROM get_contacts(%s, %s)", (limit, offset))
+    rows = cur.fetchall()
+    if rows:
+        for row in rows:
+            print(row)
+    else:
+        print("Нет данных для отображения.")
+
+# 5. Удаление по значению
+def delete_by_value(value):
+    cur.execute("CALL delete_by_username_or_phone(%s)", (value,))
+    conn.commit()
+    print("Контакт удалён.")
+
+# Главное меню
+def main():
+    while True:
+        print("\n=== PhoneBook PostgreSQL Menu ===")
+        print("1. Поиск по шаблону")
+        print("2. Добавить/обновить пользователя")
+        print("3. Массовая вставка пользователей")
+        print("4. Пагинация")
+        print("5. Удалить по значению")
+        print("6. Выйти")
+
+        choice = input("Выберите действие: ")
+
+        if choice == "1":
+            pattern = input("Введите шаблон (имя/телефон): ")
+            search_contacts(pattern)
+
+        elif choice == "2":
+            username = input("Имя: ")
+            phone = input("Телефон: ")
+            insert_or_update_user(username, phone)
+
+        elif choice == "3":
+            n = int(input("Сколько пользователей добавить? "))
+            users = []
+            for _ in range(n):
+                name = input("Имя: ")
+                phone = input("Телефон: ")
+                users.append([name, phone])
+            insert_many_users(users)
+
+        elif choice == "4":
+            limit = int(input("Сколько записей? "))
+            offset = int(input("С какого начать? "))
+            get_paginated_contacts(limit, offset)
+
+        elif choice == "5":
+            value = input("Имя или телефон для удаления: ")
+            delete_by_value(value)
+
+        elif choice == "6":
+            break
+
+        else:
+            print("Неверный выбор.")
+
+    cur.close()
+    conn.close()
+
+if __name__ == "__main__":
+    main()
